@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: school_portal_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: school_portal
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./apps/api
+    container_name: school_portal_api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./apps/api:/usr/src/app
+      - /usr/src/app/node_modules
+
+  web:
+    build:
+      context: ./apps/web
+    container_name: school_portal_web
+    restart: unless-stopped
+    depends_on:
+      - api
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/usr/src/app
+      - /usr/src/app/node_modules
+
+volumes:
+  postgres_data:
