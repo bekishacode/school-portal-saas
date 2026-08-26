@@ -1,8 +1,13 @@
 name: CI Validation
 
 # This is the "dry run" step - it runs on every PR into develop or main
-# and must pass before the PR can be merged (enforced via branch protection rules
-# in GitHub repo settings, not by this file alone).
+# and must pass before the PR can be merged (enforced via branch protection
+# rules / rulesets in GitHub repo settings, not by this file alone).
+#
+# This is an npm workspaces monorepo (apps/api, apps/web, packages/shared-types
+# all share ONE package-lock.json at the repo root), so we install once from
+# the root and then build/lint each workspace individually - we do NOT cd into
+# apps/api or apps/web and run npm install there separately.
 
 on:
   pull_request:
@@ -14,50 +19,46 @@ jobs:
   validate-api:
     name: Validate API (NestJS)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/api
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install dependencies (whole workspace)
         run: npm install
 
       - name: Lint
-        run: npm run lint || true # remove `|| true` once lint rules are finalized
+        run: npm run lint --workspace=apps/api || true # remove `|| true` once lint rules are finalized
 
       - name: Build
-        run: npm run build
+        run: npm run build --workspace=apps/api
 
       - name: Test
-        run: npm test || true # remove `|| true` once real tests exist
+        run: npm test --workspace=apps/api || true # remove `|| true` once real tests exist
 
   validate-web:
     name: Validate Web (Next.js)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/web
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install dependencies (whole workspace)
         run: npm install
 
       - name: Lint
-        run: npm run lint || true
+        run: npm run lint --workspace=apps/web || true
 
       - name: Build
-        run: npm run build
+        run: npm run build --workspace=apps/web

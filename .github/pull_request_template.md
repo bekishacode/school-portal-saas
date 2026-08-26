@@ -1,3 +1,5 @@
+Closes #<!-- ticket/issue number, e.g. Closes #12 -->
+
 ## What does this PR do?
 <!-- Short description of the change -->
 

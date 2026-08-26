@@ -84,3 +84,4 @@ Follow the phased roadmap in `docs/project-documentation.md`:
 ## License
 
 Proprietary — all rights reserved (update this once you decide on licensing terms for resale).
+<!-- ci test -->
