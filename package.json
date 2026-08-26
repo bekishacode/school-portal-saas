@@ -13,7 +13,10 @@
     "build:api": "npm run build --workspace=apps/api",
     "build:web": "npm run build --workspace=apps/web",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "feature": "bash deploy/scripts/new-feature.sh",
+    "pr": "bash deploy/scripts/push-and-pr.sh",
+    "release": "bash deploy/scripts/release.sh"
   },
   "engines": {
     "node": ">=20.0.0"
