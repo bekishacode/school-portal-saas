@@ -1,7 +1,7 @@
 # Update the usernames below once both GitHub accounts are set up.
 # This auto-requests reviews based on which folder a PR touches.
 
-/apps/api/          @your-github-username
-/apps/web/           @your-friend-github-username
-/packages/            @your-github-username @your-friend-github-username
-/docs/                 @your-github-username @your-friend-github-username
+/apps/api/          @bekishacode
+/apps/web/           @bekishacode
+/packages/            @bekishacode
+/docs/                 @bekishacode
