@@ -1,10 +1,43 @@
 # Contributing / Branching Workflow
 
 This project uses a three-tier branching model, validated by CI before anything merges,
-with every branch tied to a ticket (GitHub Issue) - similar to how Salesforce DX ties
-a branch/PR to a ticket number and detects it automatically in the editor.
+with every branch tied to a ticket (GitHub Issue). The day-to-day flow is scripted -
+see **Scripted workflow** below. The manual GitHub UI steps further down are what the
+scripts do under the hood, kept here for reference/troubleshooting.
 
-## Ticket-linked workflow (do this first, before branching)
+## One-time setup
+
+1. Install the GitHub CLI: https://cli.github.com
+2. Authenticate once: `gh auth login` (or set `GH_PAT` in your `.env` - see `.env.example`)
+3. Make sure `npm install` has been run at the repo root at least once
+
+## Scripted workflow (day-to-day)
+
+```bash
+npm run feature
+# prompts for a ticket title (or existing ticket number),
+# creates the GitHub Issue if new, creates + pushes the branch off 'develop'
+
+# ...write code, commit as normal...
+
+npm run pr
+# pushes your branch, creates the PR into 'develop' (or updates the
+# existing one), then watches CI checks live in your terminal
+
+# if checks fail: fix, commit, run `npm run pr` again - same PR, re-validates
+# if checks pass: merge on GitHub, or: gh pr merge <branch-name> --squash
+
+# once 'develop' is stable and ready to ship:
+npm run release
+# opens the develop -> main PR (or updates the existing one), watches CI
+# once green: merge on GitHub, or: gh pr merge develop --merge
+```
+
+That's the full loop: ticket -> branch -> PR -> CI-gated merge -> release -> CI-gated
+merge to production - without leaving the terminal except to click the final Merge
+button (or add `gh pr merge --auto` to the scripts yourself once you trust the flow).
+
+## Manual GitHub UI steps (reference / what the scripts automate)
 
 1. **Create a GitHub Issue for the work** ("ticket") using the *Feature* or *Bug* template
    under the repo's **Issues** tab. This gets an auto-incrementing number, e.g. `#12`.
