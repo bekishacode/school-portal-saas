@@ -1,6 +1,34 @@
 # Contributing / Branching Workflow
 
-This project uses a three-tier branching model, validated by CI before anything merges.
+This project uses a three-tier branching model, validated by CI before anything merges,
+with every branch tied to a ticket (GitHub Issue) - similar to how Salesforce DX ties
+a branch/PR to a ticket number and detects it automatically in the editor.
+
+## Ticket-linked workflow (do this first, before branching)
+
+1. **Create a GitHub Issue for the work** ("ticket") using the *Feature* or *Bug* template
+   under the repo's **Issues** tab. This gets an auto-incrementing number, e.g. `#12`.
+
+2. **Create the branch directly from the issue**: open the issue → right sidebar →
+   **Development → Create a branch**. GitHub auto-names it using the issue number,
+   e.g. `12-implement-jwt-auth`. This is what links the branch to the ticket.
+
+3. **Install the official VS Code extension "GitHub Pull Requests and Issues"**
+   (publisher: GitHub). Once installed and signed in:
+   - The status bar shows the issue linked to your current branch.
+   - The "GitHub" sidebar panel shows the ticket details without leaving VS Code.
+   - This is the "detected ticket" behavior from the Salesforce example.
+
+4. **Work and push to that branch as usual.** Every push updates the same PR -
+   if CI validation fails and you push a fix, it's still the same ticket, same PR,
+   nothing duplicates.
+
+5. **In the PR description, keep the `Closes #12` line** (already in the PR template).
+   This keeps the issue open and visibly linked through every review/CI cycle, and
+   GitHub auto-closes the issue the moment the PR merges - matching the
+   open-until-merged ticket lifecycle you're used to.
+
+## Branching model
 
 ## Branches
 
@@ -12,11 +40,13 @@ This project uses a three-tier branching model, validated by CI before anything 
 
 ## Workflow
 
-1. **Start a feature branch from `develop`:**
+1. **Start from the branch GitHub created for your ticket** (see *Ticket-linked workflow*
+   above), or create one manually off `develop` following the same `<issue-number>-description`
+   naming pattern:
    ```bash
    git checkout develop
    git pull
-   git checkout -b feature/auth-module
+   git checkout -b 12-implement-jwt-auth
    ```
 
 2. **Work, commit, push:**
