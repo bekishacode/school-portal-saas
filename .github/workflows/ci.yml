@@ -1,0 +1,63 @@
+name: CI Validation
+
+# This is the "dry run" step - it runs on every PR into develop or main
+# and must pass before the PR can be merged (enforced via branch protection rules
+# in GitHub repo settings, not by this file alone).
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  validate-api:
+    name: Validate API (NestJS)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint || true # remove `|| true` once lint rules are finalized
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test || true # remove `|| true` once real tests exist
+
+  validate-web:
+    name: Validate Web (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint || true
+
+      - name: Build
+        run: npm run build
