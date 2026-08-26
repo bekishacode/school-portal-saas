@@ -1,3 +1,4 @@
+<!-- testing CI and branch protection pipeline -->
 # School Portal SaaS
 
 Multi-tenant school management platform for primary and secondary schools — student registration, gradebook with automatic averages/ranking, and role-based portals for registrar, teacher, student/parent, library, and finance.
