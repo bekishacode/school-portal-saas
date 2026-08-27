@@ -38,6 +38,17 @@ checkGhAuth() {
   fi
 }
 
+# Creates a label if it doesn't already exist, silently, so 'gh issue create
+# --label X' never fails just because the label was never manually created
+# in the repo (the GitHub website auto-creates labels from issue template
+# front matter, but the gh CLI does not).
+ensureLabelExists() {
+  local labelName="$1"
+  if ! gh label list --json name --jq '.[].name' 2>/dev/null | grep -qx "$labelName"; then
+    gh label create "$labelName" --color "ededed" --description "Auto-created by deploy scripts" &> /dev/null
+  fi
+}
+
 # Pulls the ticket number out of the current branch name.
 # Expects branch format: <ticket-number>-description (e.g. 12-implement-auth),
 # which is exactly the format GitHub generates when you click
