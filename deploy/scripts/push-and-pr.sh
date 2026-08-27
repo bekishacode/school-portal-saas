@@ -32,8 +32,11 @@ else
 fi
 
 echo ""
+echo "Waiting for checks to register..."
+sleep 8
+
 echo "Watching CI checks (Ctrl+C to stop watching without cancelling checks)..."
-gh pr checks "$branchName" --watch
+gh pr checks "$branchName" --watch --interval 5
 
 echo ""
 echo "If checks failed: fix the code, commit, and run this script again."
