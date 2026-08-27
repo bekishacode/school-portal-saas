@@ -9,7 +9,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      // 'npm run dev:api' runs this with cwd = apps/api, where there's no .env -
+      // the real one lives at the monorepo root. Check both locations so this
+      // works whether run from the repo root or from inside apps/api directly.
+      envFilePath: ['.env', '../../.env'],
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
