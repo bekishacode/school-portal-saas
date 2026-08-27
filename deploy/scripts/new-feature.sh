@@ -37,8 +37,22 @@ function createFeatureNewTicket() {
   read -p "Ticket type (feature/bug) [feature]: " type
   type=${type:-feature}
 
+  ensureLabelExists "$type"
+
   issueUrl=$(gh issue create --title "$title" --body "Created via new-feature.sh" --label "$type")
+  if [[ -z "$issueUrl" ]]; then
+    echo "Failed to create the GitHub issue - aborting before touching any branches."
+    echo "Run 'gh issue create' manually to see the full error."
+    exit 1
+  fi
+
   ticketNumber=$(echo "$issueUrl" | grep -oE '[0-9]+$')
+  if [[ -z "$ticketNumber" ]]; then
+    echo "Issue was created but its number could not be parsed from: $issueUrl"
+    echo "Aborting before touching any branches - create the branch manually if needed."
+    exit 1
+  fi
+
   slug=$(echo "$title" | tr '[:upper:]' '[:lower:]' | tr -s ' ' '-' | tr -cd 'a-z0-9-')
   branchName="${ticketNumber}-${slug}"
 
@@ -53,6 +67,11 @@ function createFeatureNewTicket() {
 
 function createFeatureExistingTicket() {
   read -p "Existing ticket number: " ticketNumber
+  if [[ ! "$ticketNumber" =~ ^[0-9]+$ ]]; then
+    echo "'$ticketNumber' is not a valid ticket number (digits only). Aborting."
+    exit 1
+  fi
+
   read -p "Short branch description (e.g. implement-auth): " desc
   slug=$(echo "$desc" | tr '[:upper:]' '[:lower:]' | tr -s ' ' '-' | tr -cd 'a-z0-9-')
   branchName="${ticketNumber}-${slug}"
