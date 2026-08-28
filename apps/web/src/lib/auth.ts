@@ -5,7 +5,7 @@ export interface AuthUser {
   fullName: string;
   email: string;
   role: string;
-  schoolId: string;
+  schoolId: string | null;
 }
 
 export interface AuthResponse {
@@ -17,21 +17,14 @@ export interface AuthResponse {
 const TOKEN_KEY = 'school_portal_token';
 const USER_KEY = 'school_portal_user';
 
-export async function register(input: {
-  schoolName: string;
-  fullName: string;
+// schoolId is resolved by the tenant login page from the subdomain -
+// omit it for platform/root-domain login (super_admin). The backend
+// rejects the login if the account doesn't actually belong to that school.
+export async function login(input: {
   email: string;
   password: string;
+  schoolId?: string;
 }): Promise<AuthResponse> {
-  const data: AuthResponse = await apiFetch('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
-  persistSession(data);
-  return data;
-}
-
-export async function login(input: { email: string; password: string }): Promise<AuthResponse> {
   const data: AuthResponse = await apiFetch('/auth/login', {
     method: 'POST',
     body: JSON.stringify(input),
