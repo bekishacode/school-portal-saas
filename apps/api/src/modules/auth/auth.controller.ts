@@ -1,16 +1,21 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { BootstrapAdminDto } from './dto/bootstrap-admin.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  // One-time setup only - see AuthService.bootstrapSuperAdmin for the
+  // secret + already-exists checks that make this safe to leave deployed.
+  @Post('bootstrap-admin')
+  bootstrapAdmin(
+    @Body() dto: BootstrapAdminDto,
+    @Headers('x-bootstrap-secret') secret: string,
+  ) {
+    return this.authService.bootstrapSuperAdmin(dto, secret);
   }
 
   @Post('login')
@@ -19,11 +24,9 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  // Simple protected route to prove the whole chain works:
-  // token -> JwtStrategy.validate() -> request.user -> here.
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@Req() req: any) {
-    return req.user; // { userId, schoolId, role }
+    return req.user;
   }
 }
