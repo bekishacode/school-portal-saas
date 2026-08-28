@@ -24,12 +24,14 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  schoolId: string;
+  // Nullable because super_admin (platform-level, manages all tenants)
+  // does not belong to any single school. Every other role must have one.
+  @Column({ nullable: true })
+  schoolId: string | null;
 
-  @ManyToOne(() => School, { onDelete: 'CASCADE' })
+  @ManyToOne(() => School, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'schoolId' })
-  school: School;
+  school: School | null;
 
   @Column({ type: 'varchar' })
   role: Role;
@@ -40,7 +42,7 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  // Never selected by default - must opt in with { select: true } when
+  // Never selected by default - must opt in with a query builder when
   // actually checking a password, so it never accidentally leaks into
   // an API response that returns a User object.
   @Column({ select: false })

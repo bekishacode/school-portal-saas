@@ -27,12 +27,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   // Whatever this returns becomes `request.user` - shape matches what
   // RolesGuard and TenantGuard (apps/api/src/common/guards) expect.
   async validate(payload: JwtPayload) {
-    if (!payload?.sub || !payload?.schoolId || !payload?.role) {
+    // schoolId can legitimately be null (super_admin) - only sub and
+    // role are required on every token.
+    if (!payload?.sub || !payload?.role) {
       throw new UnauthorizedException('Invalid token payload');
     }
     return {
       userId: payload.sub,
-      schoolId: payload.schoolId,
+      schoolId: payload.schoolId ?? null,
       role: payload.role,
     };
   }

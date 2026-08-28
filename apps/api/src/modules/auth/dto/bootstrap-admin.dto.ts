@@ -1,10 +1,6 @@
 import { IsEmail, IsString, MinLength } from 'class-validator';
 
-export class RegisterDto {
-  @IsString()
-  @MinLength(2)
-  schoolName: string;
-
+export class BootstrapAdminDto {
   @IsString()
   @MinLength(2)
   fullName: string;

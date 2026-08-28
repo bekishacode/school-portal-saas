@@ -1,12 +1,12 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { School } from '../schools/school.entity';
-import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { BootstrapAdminDto } from './dto/bootstrap-admin.dto';
 
 const SALT_ROUNDS = 10;
 
@@ -18,38 +18,37 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  // Registers a brand new school AND its first admin user together -
-  // this is the "sign up your school" entry point. Every subsequent
-  // user (teacher, student, etc.) gets created BY a school_admin later,
-  // not through this endpoint.
-  async register(dto: RegisterDto) {
-    const existing = await this.userRepo.findOne({ where: { email: dto.email } });
-    if (existing) {
+  // One-time setup: creates the very first super_admin. Not JWT-protected
+  // (no user exists yet to hold a token) - protected instead by a shared
+  // secret from .env, and refuses to run again once any super_admin
+  // already exists, so this can't be (ab)used as a backdoor later.
+  async bootstrapSuperAdmin(dto: BootstrapAdminDto, providedSecret: string | undefined) {
+    const expectedSecret = process.env.ADMIN_BOOTSTRAP_SECRET;
+    if (!expectedSecret || providedSecret !== expectedSecret) {
+      throw new UnauthorizedException('Invalid or missing bootstrap secret');
+    }
+
+    const existingSuperAdmin = await this.userRepo.findOne({ where: { role: 'super_admin' } });
+    if (existingSuperAdmin) {
+      throw new ForbiddenException('A super_admin already exists - bootstrap can only run once');
+    }
+
+    const existingUser = await this.userRepo.findOne({ where: { email: dto.email } });
+    if (existingUser) {
       throw new ConflictException('An account with this email already exists');
     }
 
-    const subdomain = this.slugify(dto.schoolName);
-
-    const school = this.schoolRepo.create({
-      name: dto.schoolName,
-      subdomain,
-      subscriptionTier: 'basic',
-      isActive: true,
-    });
-    await this.schoolRepo.save(school);
-
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
-
     const user = this.userRepo.create({
-      schoolId: school.id,
-      role: 'school_admin',
+      schoolId: null,
+      role: 'super_admin',
       fullName: dto.fullName,
       email: dto.email,
       passwordHash,
     });
     await this.userRepo.save(user);
 
-    return this.buildAuthResponse(user, school);
+    return this.buildAuthResponse(user, null);
   }
 
   async login(dto: LoginDto) {
@@ -68,7 +67,17 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const school = await this.schoolRepo.findOne({ where: { id: user.schoolId } });
+    // If the login attempt was made from a specific school's page (the
+    // frontend resolves this from the subdomain and passes it along),
+    // make sure this user actually belongs to that school. super_admin
+    // has no schoolId and can log in from anywhere (e.g. the root domain).
+    if (dto.schoolId && user.role !== 'super_admin' && user.schoolId !== dto.schoolId) {
+      throw new UnauthorizedException('This account is not part of this school');
+    }
+
+    const school = user.schoolId
+      ? await this.schoolRepo.findOne({ where: { id: user.schoolId } })
+      : null;
     return this.buildAuthResponse(user, school);
   }
 
@@ -93,17 +102,5 @@ export class AuthService {
         ? { id: school.id, name: school.name, subdomain: school.subdomain }
         : null,
     };
-  }
-
-  private slugify(name: string): string {
-    const base = name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-    // Append a short random suffix so two schools with similar names
-    // (e.g. "Green Valley Academy" twice) don't collide on subdomain.
-    const suffix = Math.random().toString(36).slice(2, 6);
-    return `${base}-${suffix}`;
   }
 }

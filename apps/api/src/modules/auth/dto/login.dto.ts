@@ -1,4 +1,4 @@
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class LoginDto {
   @IsEmail()
@@ -6,4 +6,11 @@ export class LoginDto {
 
   @IsString()
   password: string;
+
+  // Resolved by the frontend from the subdomain being logged in from.
+  // Optional so platform/root-domain login (super_admin) still works
+  // without one.
+  @IsOptional()
+  @IsString()
+  schoolId?: string;
 }
