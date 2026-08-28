@@ -70,10 +70,8 @@ export default function LoginPage() {
         </form>
 
         <p className="text-sm text-gray-600 mt-4">
-          Don&apos;t have a school account yet?{' '}
-          <a href="/register" className="text-brand font-medium">
-            Register your school
-          </a>
+          Platform administrator access. School staff should log in from
+          their school&apos;s own login page instead.
         </p>
       </div>
     </main>
