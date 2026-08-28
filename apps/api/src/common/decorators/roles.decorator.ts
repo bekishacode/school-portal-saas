@@ -1,7 +1,8 @@
+//roles.decorator.ts
 import { SetMetadata } from '@nestjs/common';
 
 export enum Role {
-  SUPER_ADMIN = 'super_admin', // you - manages all tenants
+  SUPER_ADMIN = 'super_admin',
   SCHOOL_ADMIN = 'school_admin',
   REGISTRAR = 'registrar',
   TEACHER = 'teacher',
