@@ -7,11 +7,13 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { User } from './entities/user.entity';
 import { SchoolsModule } from '../schools/schools.module';
+import { UsageModule } from '../usage/usage.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     SchoolsModule,
+    UsageModule,
     PassportModule,
     JwtModule.registerAsync({
       // useFactory defers reading process.env until Nest actually

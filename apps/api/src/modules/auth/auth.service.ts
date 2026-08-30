@@ -9,6 +9,8 @@ import { LoginDto } from './dto/login.dto';
 import { BootstrapAdminDto } from './dto/bootstrap-admin.dto';
 
 const SALT_ROUNDS = 10;
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_MINUTES = 15;
 
 @Injectable()
 export class AuthService {
@@ -62,9 +64,29 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    if (user.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
+      const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
+      throw new UnauthorizedException(
+        `Too many failed attempts. Try again in ${minutesLeft} minute(s).`,
+      );
+    }
+
     const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
     if (!passwordMatches) {
+      user.failedLoginAttempts += 1;
+      if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+        user.lockedUntil = new Date(Date.now() + LOCKOUT_MINUTES * 60000);
+        user.failedLoginAttempts = 0; // fresh 5 tries once the lock expires
+      }
+      await this.userRepo.save(user);
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Successful login clears any prior failed attempts/lock.
+    if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+      user.failedLoginAttempts = 0;
+      user.lockedUntil = null;
+      await this.userRepo.save(user);
     }
 
     // If the login attempt was made from a specific school's page (the

@@ -19,9 +19,6 @@ export default function TenantLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Resolve the school's branding from its subdomain BEFORE anyone has
-  // logged in - this is what lets the login page look like the school's,
-  // not the platform's.
   useEffect(() => {
     getSchoolBySubdomain(params.subdomain)
       .then(setSchool)
@@ -35,9 +32,6 @@ export default function TenantLoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      // Passing school.id is what makes this a TENANT login, not a
-      // generic one - the backend rejects the attempt if this account
-      // doesn't actually belong to this school.
       await login({ email, password, schoolId: school.id });
       router.push('/dashboard');
     } catch (err) {
@@ -68,59 +62,84 @@ export default function TenantLoginPage() {
     );
   }
 
-  // Branding is applied via the same --color-brand CSS variable the rest
-  // of the app already uses (see tailwind.config.js) - falls back to the
-  // default blue if this school hasn't set a custom color yet.
   const brandStyle = school.brandColor
     ? ({ '--color-brand': school.brandColor } as React.CSSProperties)
     : undefined;
 
+  const panelStyle: React.CSSProperties = school.coverImageUrl
+    ? {
+        backgroundImage: `url(${school.coverImageUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
+    : {
+        background: `linear-gradient(135deg, ${school.brandColor ?? '#2563eb'}, #111827)`,
+      };
+
   return (
-    <main className="flex min-h-screen items-center justify-center p-8" style={brandStyle}>
-      <div className="w-full max-w-sm">
-        {school.logoUrl && (
-          <img src={school.logoUrl} alt={school.name} className="h-12 mb-4 object-contain" />
-        )}
-        <h1 className="text-2xl font-bold text-brand mb-1">{school.name}</h1>
-        <p className="text-sm text-gray-600 mb-6">Log in to your account</p>
+    <main className="min-h-screen flex flex-col md:flex-row" style={brandStyle}>
+      {/* Left Panel - Form (50% width, centered content) */}
+      <div className="flex-1 md:w-1/2 flex items-center justify-center p-8">
+        <div className="w-full max-w-sm">
+          {/* School logo and name */}
+          <div className="flex items-center gap-3 mb-6">
+            {school.logoUrl && (
+              <img src={school.logoUrl} alt="" className="h-10 w-10 object-contain rounded" />
+            )}
+            <span className="text-lg font-semibold text-brand">{school.name}</span>
+          </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-gray-700">Email</span>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-          </label>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Log in</h1>
+          <p className="text-sm text-gray-600 mb-6">Enter your details to access your account.</p>
 
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-gray-700">Password</span>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-          </label>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-gray-700">Email</span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </label>
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
-              {error}
-            </p>
-          )}
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-gray-700">Password</span>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </label>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-brand text-white rounded px-4 py-2 font-medium disabled:opacity-50"
-          >
-            {submitting ? 'Logging in...' : 'Log in'}
-          </button>
-        </form>
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="bg-brand text-white rounded px-4 py-2 font-medium disabled:opacity-50"
+            >
+              {submitting ? 'Logging in...' : 'Log in'}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Right Panel - Image (50% width, hidden on mobile) */}
+      <div className="hidden md:flex md:w-1/2 relative">
+        <div className="relative w-full" style={panelStyle}>
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="absolute bottom-0 left-0 right-0 p-10">
+            <h2 className="text-2xl font-bold text-white drop-shadow">{school.name}</h2>
+          </div>
+        </div>
       </div>
     </main>
   );

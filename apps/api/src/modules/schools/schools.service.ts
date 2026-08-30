@@ -63,6 +63,7 @@ export class SchoolsService {
       name: school.name,
       subdomain: school.subdomain,
       logoUrl: school.logoUrl,
+      coverImageUrl: school.coverImageUrl,
       brandColor: school.brandColor,
     };
   }
