@@ -5,6 +5,7 @@ export interface SchoolBranding {
   name: string;
   subdomain: string;
   logoUrl: string | null;
+  coverImageUrl: string | null;
   brandColor: string | null;
 }
 

@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { BootstrapAdminDto } from './dto/bootstrap-admin.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { DailyQuotaGuard } from '../usage/daily-quota.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -24,8 +25,11 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  // DailyQuotaGuard MUST come after JwtAuthGuard - it reads request.user,
+  // which JwtAuthGuard populates. Every future protected, tenant-scoped
+  // route should follow this same guard order.
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DailyQuotaGuard)
   me(@Req() req: any) {
     return req.user;
   }

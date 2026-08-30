@@ -48,6 +48,14 @@ export class User {
   @Column({ select: false })
   passwordHash: string;
 
+  // Brute-force login protection: 5 wrong passwords locks the account
+  // for 15 minutes. Reset to 0/null on any successful login.
+  @Column({ default: 0 })
+  failedLoginAttempts: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lockedUntil: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
