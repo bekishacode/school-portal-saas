@@ -35,8 +35,13 @@ export class AuthService {
       throw new ForbiddenException('A super_admin already exists - bootstrap can only run once');
     }
 
-    const existingUser = await this.userRepo.findOne({ where: { email: dto.email } });
-    if (existingUser) {
+    const existingUsername = await this.userRepo.findOne({ where: { username: dto.username } });
+    if (existingUsername) {
+      throw new ConflictException('That username is already taken');
+    }
+
+    const existingEmail = await this.userRepo.findOne({ where: { email: dto.email } });
+    if (existingEmail) {
       throw new ConflictException('An account with this email already exists');
     }
 
@@ -45,7 +50,9 @@ export class AuthService {
       schoolId: null,
       role: 'super_admin',
       fullName: dto.fullName,
+      username: dto.username,
       email: dto.email,
+      phone: dto.phone,
       passwordHash,
     });
     await this.userRepo.save(user);
@@ -57,11 +64,11 @@ export class AuthService {
     const user = await this.userRepo
       .createQueryBuilder('user')
       .addSelect('user.passwordHash') // passwordHash is select:false by default
-      .where('user.email = :email', { email: dto.email })
+      .where('user.username = :username', { username: dto.username })
       .getOne();
 
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid username or password');
     }
 
     if (user.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
@@ -79,7 +86,7 @@ export class AuthService {
         user.failedLoginAttempts = 0; // fresh 5 tries once the lock expires
       }
       await this.userRepo.save(user);
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid username or password');
     }
 
     // Successful login clears any prior failed attempts/lock.
@@ -116,6 +123,7 @@ export class AuthService {
       user: {
         id: user.id,
         fullName: user.fullName,
+        username: user.username,
         email: user.email,
         role: user.role,
         schoolId: user.schoolId,

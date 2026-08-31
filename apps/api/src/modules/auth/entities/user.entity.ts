@@ -39,8 +39,17 @@ export class User {
   @Column()
   fullName: string;
 
+  // The actual login identifier - not email. One login page serves every
+  // role (student, teacher, admin, etc.); the role decides access after
+  // login, same as a Salesforce profile.
+  @Column({ unique: true })
+  username: string;
+
   @Column({ unique: true })
   email: string;
+
+  @Column({ nullable: true })
+  phone?: string;
 
   // Never selected by default - must opt in with a query builder when
   // actually checking a password, so it never accidentally leaks into

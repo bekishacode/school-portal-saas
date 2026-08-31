@@ -3,6 +3,7 @@ import { apiFetch } from './api-client';
 export interface AuthUser {
   id: string;
   fullName: string;
+  username: string;
   email: string;
   role: string;
   schoolId: string | null;
@@ -21,7 +22,7 @@ const USER_KEY = 'school_portal_user';
 // omit it for platform/root-domain login (super_admin). The backend
 // rejects the login if the account doesn't actually belong to that school.
 export async function login(input: {
-  email: string;
+  username: string;
   password: string;
   schoolId?: string;
 }): Promise<AuthResponse> {
