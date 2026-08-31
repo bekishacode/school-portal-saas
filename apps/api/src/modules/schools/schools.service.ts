@@ -19,8 +19,13 @@ export class SchoolsService {
   // Only ever called by a super_admin (enforced at the controller via
   // RolesGuard) - this is the replacement for the old public register.
   async createSchoolWithAdmin(dto: CreateSchoolDto) {
-    const existingUser = await this.userRepo.findOne({ where: { email: dto.adminEmail } });
-    if (existingUser) {
+    const existingUsername = await this.userRepo.findOne({ where: { username: dto.adminUsername } });
+    if (existingUsername) {
+      throw new ConflictException('That username is already taken');
+    }
+
+    const existingEmail = await this.userRepo.findOne({ where: { email: dto.adminEmail } });
+    if (existingEmail) {
       throw new ConflictException('An account with this email already exists');
     }
 
@@ -39,14 +44,16 @@ export class SchoolsService {
       schoolId: school.id,
       role: 'school_admin',
       fullName: dto.adminFullName,
+      username: dto.adminUsername,
       email: dto.adminEmail,
+      phone: dto.adminPhone,
       passwordHash,
     });
     await this.userRepo.save(admin);
 
     return {
       school: { id: school.id, name: school.name, subdomain: school.subdomain },
-      admin: { id: admin.id, fullName: admin.fullName, email: admin.email },
+      admin: { id: admin.id, fullName: admin.fullName, username: admin.username, email: admin.email },
     };
   }
 

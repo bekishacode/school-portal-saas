@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 // Used by super_admin to onboard a new school + its first admin user.
 // Not public - this is the replacement for the old open self-registration.
@@ -11,8 +11,16 @@ export class CreateSchoolDto {
   @MinLength(2)
   adminFullName: string;
 
+  @IsString()
+  @MinLength(3)
+  adminUsername: string;
+
   @IsEmail()
   adminEmail: string;
+
+  @IsOptional()
+  @IsString()
+  adminPhone?: string;
 
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters' })
