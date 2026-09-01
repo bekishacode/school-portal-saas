@@ -1,24 +1,31 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { AuthUser } from '@/lib/auth';
 import { SearchIcon, BellIcon, SettingsIcon, GridIcon, ChevronDownIcon } from './icons';
 
 // Constant fallback (Change this value or pass `unreadNotificationsCount` via props)
 const DEFAULT_UNREAD_COUNT = 3;
 
-// Which nav items each role can see. This is placeholder navigation for
-// now (selecting an item just changes the active label - nothing routes
-// anywhere yet) - the real pages get built as their own tickets, but the
-// shell and its role-based visibility rules are established here first.
-const NAV_ITEMS: { label: string; roles: string[] }[] = [
-  { label: 'Home', roles: ['super_admin', 'school_admin', 'registrar', 'teacher', 'student', 'parent', 'librarian', 'accountant'] },
+// Role-based nav. Items with an href route; the rest stay placeholders
+// until their own tickets land.
+const NAV_ITEMS: { label: string; href?: string; roles: string[] }[] = [
+  { label: 'Home', href: '/dashboard', roles: ['super_admin', 'school_admin', 'registrar', 'teacher', 'student', 'parent', 'librarian', 'accountant'] },
   { label: 'Schools', roles: ['super_admin'] },
   { label: 'Subjects', roles: ['school_admin', 'registrar', 'teacher'] },
-  { label: 'Teachers', roles: ['school_admin', 'registrar'] },
-  { label: 'Students', roles: ['school_admin', 'registrar', 'teacher'] },
-  { label: 'Registrars', roles: ['school_admin'] },
+  { label: 'Teachers', href: '/dashboard/teachers', roles: ['school_admin', 'registrar'] },
+  { label: 'Students', href: '/dashboard/students', roles: ['school_admin', 'registrar', 'teacher'] },
+  { label: 'Registrars', href: '/dashboard/registrars', roles: ['school_admin'] },
 ];
+
+function isNavActive(label: string, href: string | undefined, pathname: string) {
+  const segment = pathname.replace(/\/$/, '').split('/').pop() ?? '';
+  if (label === 'Home') return segment === 'dashboard';
+  if (!href) return false;
+  return segment === href.split('/').pop();
+}
 
 export function AppShell({
   user,
@@ -37,12 +44,13 @@ export function AppShell({
 }) {
   const [navOpen, setNavOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [activeNav, setActiveNav] = useState('Home');
-
+  const pathname = usePathname();
   const visibleNavItems = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
+  const activeNav =
+    visibleNavItems.find((item) => isNavActive(item.label, item.href, pathname))?.label ?? 'Home';
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-white">
       {/* Top bar: org branding, global search, utility icons, profile */}
       <header className="border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between px-6 h-14">
@@ -129,21 +137,31 @@ export function AppShell({
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setNavOpen(false)} />
                 <div className="absolute left-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-lg py-1 z-20">
-                  {visibleNavItems.map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => {
-                        setActiveNav(item.label);
-                        setNavOpen(false);
-                      }}
-                      type="button"
-                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
-                        activeNav === item.label ? 'text-brand font-medium' : 'text-gray-700'
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
+                  {visibleNavItems.map((item) =>
+                    item.href ? (
+                      <Link
+                        key={item.label}
+                        href={item.href}
+                        onClick={() => setNavOpen(false)}
+                        className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                          activeNav === item.label ? 'text-brand font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ) : (
+                      <button
+                        key={item.label}
+                        onClick={() => setNavOpen(false)}
+                        type="button"
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                          activeNav === item.label ? 'text-brand font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ),
+                  )}
                 </div>
               </>
             )}
@@ -152,7 +170,7 @@ export function AppShell({
       </div>
 
       {/* Main body */}
-      <main className="flex-1 p-6">{children}</main>
+      <main className="flex-1 p-6 bg-gray-50">{children}</main>
     </div>
   );
 }

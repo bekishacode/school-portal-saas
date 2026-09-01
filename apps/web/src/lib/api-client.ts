@@ -11,9 +11,10 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
+  const { headers, ...rest } = options;
   const res = await fetch(`${API_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
+    ...rest,
+    headers: { 'Content-Type': 'application/json', ...headers },
   });
 
   let body: any = null;

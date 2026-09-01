@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getSchoolBySubdomain } from '@/lib/schools';
+import { TenantDashboardFrame } from '@/components/TenantDashboardFrame';
 
 export async function generateMetadata({
   params,
@@ -15,5 +16,5 @@ export async function generateMetadata({
 }
 
 export default function TenantDashboardLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return <TenantDashboardFrame>{children}</TenantDashboardFrame>;
 }

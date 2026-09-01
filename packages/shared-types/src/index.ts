@@ -23,10 +23,19 @@ export interface School {
 
 export interface User {
   id: string;
-  schoolId: string;
+  schoolId: string | null;
   role: Role;
   fullName: string;
+  username: string;
   email: string;
+  phone?: string | null;
+  grade?: string | null;
+  section?: string | null;
+  department?: string | null;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  createdBy?: string | null;
+  updatedBy?: string | null;
 }
 
 export interface Student {

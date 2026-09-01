@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { SchoolsModule } from './modules/schools/schools.module';
+import { UsersModule } from './modules/users/users.module';
 import { UsageModule } from './modules/usage/usage.module';
 
 // Feature modules still to come: StudentsModule, AcademicModule, GradingModule ...
@@ -32,6 +33,7 @@ import { UsageModule } from './modules/usage/usage.module';
     }),
     AuthModule,
     SchoolsModule,
+    UsersModule,
     UsageModule,
   ],
 })

@@ -65,6 +65,21 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   lockedUntil: Date | null;
 
+  @Column({ nullable: true })
+  grade?: string;
+
+  @Column({ nullable: true })
+  section?: string;
+
+  @Column({ nullable: true })
+  department?: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  createdBy: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  updatedBy: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

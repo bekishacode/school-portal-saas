@@ -26,6 +26,10 @@ export class TenantGuard implements CanActivate {
 
     if (user.role === 'super_admin') return true;
 
+    if (!user.schoolId) {
+      throw new ForbiddenException('This action requires a school context');
+    }
+
     const requestedSchoolId =
       request.params?.schoolId || request.body?.schoolId || request.query?.schoolId;
 
