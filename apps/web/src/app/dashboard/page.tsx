@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getToken, getStoredUser, logout, AuthUser } from '@/lib/auth';
 import { authedFetch } from '@/lib/api-client';
+import { AppShell } from '@/components/AppShell';
+
+const PLATFORM_NAME = process.env.NEXT_PUBLIC_PLATFORM_NAME ?? 'Ekballo';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -17,8 +20,6 @@ export default function DashboardPage() {
       return;
     }
 
-    // Confirms the token is actually still valid by hitting the real
-    // protected endpoint, rather than just trusting what's in localStorage.
     authedFetch('/auth/me', token)
       .then(() => setUser(getStoredUser()))
       .catch(() => {
@@ -33,7 +34,7 @@ export default function DashboardPage() {
     router.push('/login');
   }
 
-  if (checking) {
+  if (checking || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-gray-500">Loading...</p>
@@ -42,17 +43,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <h1 className="text-2xl font-bold text-brand">Welcome, {user?.fullName}</h1>
-      <p className="mt-2 text-gray-600">
-        Logged in as <span className="font-medium">{user?.role}</span>
-      </p>
-      <button
-        onClick={handleLogout}
-        className="mt-6 text-sm text-gray-500 underline"
-      >
-        Log out
-      </button>
-    </main>
+    <AppShell user={user} orgName={PLATFORM_NAME} logoUrl={null} onLogout={handleLogout}>
+      <div className="max-w-3xl">
+        <h1 className="text-xl font-bold text-gray-900">Welcome, {user.fullName}</h1>
+        <p className="text-gray-600 mt-1">
+          You are logged in as <span className="font-medium capitalize">{user.role.replace('_', ' ')}</span>.
+        </p>
+      </div>
+    </AppShell>
   );
 }

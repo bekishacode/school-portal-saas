@@ -5,35 +5,40 @@ import { NextRequest, NextResponse } from 'next/server';
 // Add your real production root domain here once you have one, e.g. 'ekballo.com'.
 const ROOT_HOSTS = ['localhost:3000', '127.0.0.1:3000'];
 
+// Any path that looks like a static/metadata file (has a file extension)
+// should never be rewritten into /tenant/<subdomain>/... - this covers
+// icon.svg, favicon.ico, robots.txt, sitemap.xml, manifest.json, etc.
+// Without this, a request for /icon.svg on a subdomain host would get
+// rewritten to /tenant/<subdomain>/icon.svg, which doesn't exist -> 404,
+// which is exactly why the favicon worked on the root domain but not on
+// any tenant subdomain.
+const STATIC_FILE_PATTERN = /\.[a-zA-Z0-9]+$/;
+
 export function middleware(request: NextRequest) {
   const host = request.headers.get('host') ?? '';
   const { pathname } = request.nextUrl;
 
-  // Never rewrite Next.js internals or static assets.
-  if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
+  // Never rewrite Next.js internals, API routes, or static/metadata files
+  // (icon.svg, favicon.ico, robots.txt, manifest.json, etc.) - these must
+  // stay identical across every tenant subdomain and the root domain.
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    STATIC_FILE_PATTERN.test(pathname)
+  ) {
     return NextResponse.next();
   }
 
   const subdomain = extractSubdomain(host);
 
-  // No subdomain (root domain / localhost without a prefix) - serve
-  // platform pages as-is, untouched.
   if (!subdomain) {
     return NextResponse.next();
   }
 
-  // Already a /tenant/* URL (e.g. someone linked directly, or our own
-  // temporary homepage form during step 2) - don't double-rewrite.
   if (pathname.startsWith('/tenant/')) {
     return NextResponse.next();
   }
 
-  // Rewrite e.g. amen-harvard-academy-7jcq.localhost:3000/login
-  // to        /tenant/amen-harvard-academy-7jcq/login
-  // internally - the browser's URL bar keeps showing the clean subdomain.
-  // A bare root visit (just the subdomain, no path) defaults to that
-  // school's login page, since that's the only tenant page that exists
-  // so far - revisit this once a tenant homepage/dashboard exists.
   const url = request.nextUrl.clone();
   url.pathname = pathname === '/' ? `/tenant/${subdomain}/login` : `/tenant/${subdomain}${pathname}`;
   return NextResponse.rewrite(url);
@@ -44,9 +49,6 @@ function extractSubdomain(host: string): string | null {
 
   const hostWithoutPort = host.split(':')[0];
 
-  // Handles both real domains (foo.ekballo.com) and local dev
-  // (foo.localhost) - *.localhost resolves to loopback automatically
-  // in modern browsers, no /etc/hosts editing required.
   if (hostWithoutPort.endsWith('.localhost')) {
     const sub = hostWithoutPort.replace('.localhost', '');
     return sub && sub !== 'www' ? sub : null;
@@ -57,8 +59,6 @@ function extractSubdomain(host: string): string | null {
   }
 
   const parts = hostWithoutPort.split('.');
-  // e.g. "amen-harvard-academy-7jcq.ekballo.com" -> 3 parts -> subdomain present
-  // e.g. "ekballo.com" or "www.ekballo.com" -> root domain, no tenant subdomain
   if (parts.length >= 3 && parts[0] !== 'www') {
     return parts[0];
   }
@@ -67,5 +67,10 @@ function extractSubdomain(host: string): string | null {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // Excludes _next internals AND any path with a file extension
+  // (icon.svg, favicon.ico, robots.txt, manifest.json, images, etc.)
+  // from even invoking this middleware at all - more efficient than
+  // relying purely on the in-function check above, though both are
+  // kept as a safety net against each other.
+  matcher: ['/((?!_next/static|_next/image|.*\\.[a-zA-Z0-9]+$).*)'],
 };

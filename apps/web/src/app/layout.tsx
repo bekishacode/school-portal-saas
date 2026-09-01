@@ -2,8 +2,11 @@ import type { Metadata } from 'next';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
-  title: 'School Portal',
-  description: 'Multi-tenant school management platform',
+  title: {
+    default: 'scholaas',
+    template: '%s | scholaas',
+  },
+  description: 'School management platform',
 };
 
 export default function RootLayout({
