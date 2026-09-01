@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <rect width="64" height="64" rx="14" fill="#2563EB"/>
+  <!-- Graduation Cap Top / Diamond Node -->
+  <path d="M32 14L48 23L32 32L16 23Z" fill="#60A5FA"/>
+  <path d="M22 28.5V36C22 39 32 41 32 41C32 41 42 39 42 36V28.5" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Central Hub / Pillar Peak -->
+  <path d="M25 48L32 32L39 48" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
