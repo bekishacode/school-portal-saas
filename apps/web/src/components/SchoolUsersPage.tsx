@@ -28,29 +28,36 @@ const PAGE_ACCESS: Record<CreatableSchoolRole, string[]> = {
 type Column = { key: string; label: string; width: number };
 
 function defaultColumns(role: CreatableSchoolRole): Column[] {
-  const extra: Column[] =
+  const baseColumns: Column[] = [
+    { key: 'id', label: '', width: 50 },
+    { key: 'fullName', label: 'Name', width: 200 },
+    { key: 'username', label: 'Username', width: 150 },
+    { key: 'email', label: 'Email', width: 250 },
+    { key: 'phone', label: 'Phone', width: 150 },
+  ];
+
+  const roleSpecificColumns: Column[] = 
     role === 'student'
       ? [
-          { key: 'grade', label: 'Grade', width: 100 },
-          { key: 'section', label: 'Section', width: 100 },
+          { key: 'grade', label: 'Grade', width: 120 },
+          { key: 'section', label: 'Section', width: 120 },
         ]
       : role === 'teacher'
-        ? [{ key: 'department', label: 'Department', width: 140 }]
+        ? [{ key: 'department', label: 'Department', width: 180 }]
         : [];
 
-  return [
-    { key: 'fullName', label: 'Name', width: 180 },
-    { key: 'username', label: 'Username', width: 140 },
-    { key: 'email', label: 'Email', width: 220 },
-    { key: 'phone', label: 'Phone', width: 140 },
-    ...extra,
-    { key: 'createdAt', label: 'Created', width: 120 },
-    { key: 'createdBy', label: 'Created by', width: 140 },
+  const metaColumns: Column[] = [
+    { key: 'createdAt', label: 'Created', width: 130 },
+    { key: 'createdBy', label: 'Created by', width: 150 },
   ];
+
+  return [...baseColumns, ...roleSpecificColumns, ...metaColumns];
 }
 
 function cellValue(user: SchoolUser, key: string): string {
   switch (key) {
+    case 'id':
+      return '';
     case 'fullName':
       return user.fullName;
     case 'username':
@@ -88,6 +95,7 @@ export function SchoolUsersPage({
   const [showForm, setShowForm] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [filterText, setFilterText] = useState('');
+  const [searchText, setSearchText] = useState(''); // New state for search
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fullName, setFullName] = useState('');
@@ -232,154 +240,201 @@ export function SchoolUsersPage({
   const tableWidth = columns.reduce((sum, col) => sum + col.width, 0);
 
   return (
-    <div className="max-w-6xl space-y-4">
-      <section className="bg-gray-50 px-4 py-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              People at this school with the {roleLabel.toLowerCase()} role.
-            </p>
+    <div className="w-full h-full flex flex-col">
+      {/* Header with title and actions */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shrink-0">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+          <p className="text-sm text-gray-600 mt-0.5">
+            {users.length} {roleLabel.toLowerCase()}(s) at this school
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* SEARCH INPUT - Added here */}
+          <div className="relative">
+            <input
+              type="search"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder={`Search ${title.toLowerCase()}...`}
+              className="w-64 border border-gray-300 rounded-lg px-4 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent focus:bg-white transition-colors"
+            />
+            <svg
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          
+          <button
+            type="button"
+            onClick={() => setShowFilter((open) => !open)}
+            className={`inline-flex items-center gap-2 border rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              showFilter 
+                ? 'border-brand bg-brand/10 text-brand' 
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <FilterIcon className="h-4 w-4" />
+            Filter
+          </button>
+          {canCreate && (
             <button
               type="button"
-              onClick={() => setShowFilter((open) => !open)}
-              className="inline-flex items-center gap-1.5 border border-gray-300 bg-white text-gray-700 rounded px-3 py-2 text-sm font-medium hover:bg-gray-50"
+              onClick={() => {
+                setShowForm(true);
+                setFormError(null);
+              }}
+              className="bg-[#0F766E] text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
             >
-              <FilterIcon className="h-4 w-4" />
-              Filter
+              + New {roleLabel}
             </button>
-            {canCreate && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(true);
-                  setFormError(null);
-                }}
-                className="bg-brand text-white rounded px-4 py-2 text-sm font-medium"
-              >
-                New {roleLabel}
-              </button>
-            )}
-          </div>
+          )}
         </div>
-        {showFilter && (
-          <div className="mt-3">
+      </div>
+
+      {/* Filter bar */}
+      {showFilter && (
+        <div className="bg-gray-50 border-b border-gray-200 px-6 py-3 shrink-0">
+          <div className="max-w-md">
             <input
               type="search"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
-              placeholder="Filter by name, username, or email..."
-              className="w-full sm:max-w-sm border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand"
+              placeholder={`Filter ${title.toLowerCase()}...`}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
+              autoFocus
             />
           </div>
-        )}
-      </section>
+        </div>
+      )}
 
-      <section>
-        {loading && <p className="text-gray-500">Loading...</p>}
+      {/* Table container - fills remaining space */}
+      <div className="flex-1 overflow-auto bg-gray-50 p-6">
+        {loading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-gray-500">Loading {title.toLowerCase()}...</div>
+          </div>
+        )}
+        
         {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{error}</p>
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
         )}
 
         {!loading && !error && (
-          <div className="overflow-x-auto border border-gray-300 rounded-lg bg-white">
-            <table className="text-sm table-fixed border-collapse" style={{ width: tableWidth, minWidth: '100%' }}>
-              <colgroup>
-                {columns.map((col) => (
-                  <col key={col.key} style={{ width: col.width }} />
-                ))}
-              </colgroup>
-              <thead>
-                <tr className="bg-[#d4e157] text-left text-gray-800">
-                  {columns.map((col, index) => (
-                    <th
-                      key={col.key}
-                      className="relative px-3 py-2 font-semibold border-r border-[#b8c94a] last:border-r-0 select-none"
-                    >
-                      {col.label}
-                      <span
-                        role="separator"
-                        aria-orientation="vertical"
-                        onMouseDown={(e) => startResize(index, e)}
-                        className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize hover:bg-gray-700/30"
-                      />
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.length === 0 ? (
-                  <tr className="bg-white">
-                    <td
-                      colSpan={columns.length}
-                      className="px-3 py-6 text-center text-gray-600 border-t border-gray-200"
-                    >
-                      {users.length === 0
-                        ? `No ${title.toLowerCase()} yet.`
-                        : 'No rows match this filter.'}
-                    </td>
+          <div className="h-full flex flex-col bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="flex-1 overflow-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-[#0F766E] text-left text-white">
+                    {columns.map((col, index) => (
+                      <th
+                        key={col.key}
+                        className="relative px-4 py-3 font-semibold border-r border-[#b8c94a] last:border-r-0 select-none whitespace-nowrap"
+                        style={{ width: col.width, minWidth: col.width }}
+                      >
+                        {col.label}
+                        <span
+                          role="separator"
+                          aria-orientation="vertical"
+                          onMouseDown={(e) => startResize(index, e)}
+                          className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize hover:bg-gray-700/30"
+                        />
+                      </th>
+                    ))}
                   </tr>
-                ) : (
-                  filteredUsers.map((user, rowIndex) => (
-                    <tr key={user.id} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-100'}>
-                      {columns.map((col) => (
-                        <td
-                          key={col.key}
-                          className="px-3 py-2 text-gray-800 border-r border-gray-200 last:border-r-0 truncate"
-                          title={cellValue(user, col.key)}
-                        >
-                          {cellValue(user, col.key)}
-                        </td>
-                      ))}
+                </thead>
+                <tbody>
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        className="px-4 py-12 text-center text-gray-500"
+                      >
+                        {users.length === 0
+                          ? `No ${title.toLowerCase()} found. ${canCreate ? 'Create one using the button above.' : ''}`
+                          : 'No results match your filter.'}
+                      </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    filteredUsers.map((user, rowIndex) => (
+                      <tr 
+                        key={user.id} 
+                        className={`${rowIndex % 2 === 0 ? 'bg-white' : 'bg-[#F0FDFA]'} hover:bg-teal-100/100 transition-colors`}
+                      >
+                        {columns.map((col) => (
+                          <td
+                            key={col.key}
+                            className="px-4 py-3 text-gray-800 border-r border-gray-200 last:border-r-0 truncate"
+                            title={col.key === 'id' ? String(rowIndex + 1) : cellValue(user, col.key)}
+                          >
+                            {col.key === 'id' ? rowIndex + 1 : cellValue(user, col.key)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Footer with record count */}
+            <div className="border-t border-gray-200 px-4 py-2 bg-gray-50 text-sm text-gray-600 shrink-0">
+              Showing {filteredUsers.length} of {users.length} {roleLabel.toLowerCase()}(s)
+            </div>
           </div>
         )}
-      </section>
+      </div>
 
+      {/* Create user modal */}
       {canCreate && showForm && (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           onClick={closeForm}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="create-user-title"
-            className="w-full max-w-lg bg-white rounded-lg shadow-xl border border-gray-200 p-5"
+            className="w-full max-w-lg bg-white rounded-xl shadow-2xl border border-gray-200 p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <h2 id="create-user-title" className="text-lg font-semibold text-gray-900">
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <h2 id="create-user-title" className="text-xl font-semibold text-gray-900">
                 New {roleLabel}
               </h2>
               <button
                 type="button"
                 onClick={closeForm}
-                className="text-gray-500 hover:text-gray-800 text-sm"
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
               >
-                Close
+                ×
               </button>
             </div>
             <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-gray-700">Full name</span>
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-gray-700">Full name *</span>
                 <input
                   type="text"
                   required
                   minLength={2}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-gray-700">Username</span>
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-gray-700">Username *</span>
                 <input
                   type="text"
                   required
@@ -387,63 +442,63 @@ export function SchoolUsersPage({
                   autoComplete="off"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-gray-700">Email</span>
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-gray-700">Email *</span>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-gray-700">Phone (optional)</span>
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-gray-700">Phone</span>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                 />
               </label>
               {role === 'student' && (
                 <>
-                  <label className="flex flex-col gap-1 text-sm">
+                  <label className="flex flex-col gap-1.5 text-sm">
                     <span className="font-medium text-gray-700">Grade</span>
                     <input
                       type="text"
                       value={grade}
                       onChange={(e) => setGrade(e.target.value)}
-                      className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                     />
                   </label>
-                  <label className="flex flex-col gap-1 text-sm">
+                  <label className="flex flex-col gap-1.5 text-sm">
                     <span className="font-medium text-gray-700">Section</span>
                     <input
                       type="text"
                       value={section}
                       onChange={(e) => setSection(e.target.value)}
-                      className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                     />
                   </label>
                 </>
               )}
               {role === 'teacher' && (
-                <label className="flex flex-col gap-1 text-sm sm:col-span-2">
+                <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
                   <span className="font-medium text-gray-700">Department</span>
                   <input
                     type="text"
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                   />
                 </label>
               )}
-              <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-                <span className="font-medium text-gray-700">Password</span>
+              <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
+                <span className="font-medium text-gray-700">Password *</span>
                 <input
                   type="password"
                   required
@@ -451,30 +506,30 @@ export function SchoolUsersPage({
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                 />
               </label>
 
               {formError && (
-                <p className="sm:col-span-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+                <p className="sm:col-span-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                   {formError}
                 </p>
               )}
 
-              <div className="sm:col-span-2 flex justify-end gap-2">
+              <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={closeForm}
-                  className="border border-gray-300 text-gray-700 rounded px-4 py-2 text-sm font-medium"
+                  className="border border-gray-300 text-gray-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="bg-brand text-white rounded px-4 py-2 text-sm font-medium disabled:opacity-50"
+                  className="bg-brand text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? 'Creating...' : `Create ${roleLabel.toLowerCase()}`}
+                  {submitting ? 'Creating...' : `Create ${roleLabel}`}
                 </button>
               </div>
             </form>

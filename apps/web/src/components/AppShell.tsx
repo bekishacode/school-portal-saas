@@ -12,17 +12,17 @@ const DEFAULT_UNREAD_COUNT = 3;
 // Role-based nav. Items with an href route; the rest stay placeholders
 // until their own tickets land.
 const NAV_ITEMS: { label: string; href?: string; roles: string[] }[] = [
-  { label: 'Home', href: '/dashboard', roles: ['super_admin', 'school_admin', 'registrar', 'teacher', 'student', 'parent', 'librarian', 'accountant'] },
+  { label: 'Home', href: '/home', roles: ['super_admin', 'school_admin', 'registrar', 'teacher', 'student', 'parent', 'librarian', 'accountant'] },
   { label: 'Schools', roles: ['super_admin'] },
   { label: 'Subjects', roles: ['school_admin', 'registrar', 'teacher'] },
-  { label: 'Teachers', href: '/dashboard/teachers', roles: ['school_admin', 'registrar'] },
-  { label: 'Students', href: '/dashboard/students', roles: ['school_admin', 'registrar', 'teacher'] },
-  { label: 'Registrars', href: '/dashboard/registrars', roles: ['school_admin'] },
+  { label: 'Teachers', href: '/teachers', roles: ['school_admin', 'registrar'] },
+  { label: 'Students', href: '/students', roles: ['school_admin', 'registrar', 'teacher'] },
+  { label: 'Registrars', href: '/registrars', roles: ['school_admin'] },
 ];
 
 function isNavActive(label: string, href: string | undefined, pathname: string) {
   const segment = pathname.replace(/\/$/, '').split('/').pop() ?? '';
-  if (label === 'Home') return segment === 'dashboard';
+  if (label === 'Home') return segment === 'home';
   if (!href) return false;
   return segment === href.split('/').pop();
 }
