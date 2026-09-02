@@ -9,9 +9,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const school = await getSchoolBySubdomain(params.subdomain);
-    return { title: `Dashboard · ${school.name}` };
+    return { 
+      title: {
+        default: `Home | ${school.name}`,
+        template: `%s | ${school.name} | Scholaas`
+      }
+    };
   } catch {
-    return { title: 'Dashboard' };
+    return { 
+      title: {
+        default: 'Home',
+        template: '%s | Scholaas'
+      }
+    };
   }
 }
 

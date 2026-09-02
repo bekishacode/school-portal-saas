@@ -37,7 +37,7 @@ export default function TenantLoginPage() {
     setSubmitting(true);
     try {
       await login({ username, password, schoolId: school.id });
-      router.push('/dashboard');
+      router.push('/home');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {
